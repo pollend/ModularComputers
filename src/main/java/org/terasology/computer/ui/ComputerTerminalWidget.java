@@ -16,6 +16,8 @@
 package org.terasology.computer.ui;
 
 import org.codehaus.plexus.util.StringUtils;
+import org.terasology.computer.ui.gui.PlayerCommandConsoleGui;
+import org.terasology.computer.ui.gui.ProgramEditingConsoleGui;
 import org.terasology.utilities.Assets;
 import org.terasology.computer.context.ComputerConsole;
 import org.terasology.computer.event.server.ConsoleListeningRegistrationEvent;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2017 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,16 @@
  */
 package org.terasology.computer.component;
 
-import org.terasology.entitySystem.Component;
-import org.terasology.network.Replicate;
 import org.terasology.reflection.MappedContainer;
-import org.terasology.world.block.ForceBlockActive;
-import org.terasology.world.block.items.AddToBlockBasedItem;
 
-import java.util.HashMap;
 import java.util.Map;
 
-@ForceBlockActive
-@AddToBlockBasedItem
-public class ComputerComponent implements Component {
-    public int moduleSlotStart;
-    public int moduleSlotCount = 4;
-    public int cpuSpeed = 10;
-    public int stackSize = 10;
-    public int memorySize = 1024;
-    @Replicate
-    public int computerId = -1;
+public class FileSystemComponent {
+    public FolderNode root;
+
+    @MappedContainer
+    public static class FolderNode{
+        public Map<String,FolderNode> folders;
+        public Map<String,String> files;
+    }
 }
