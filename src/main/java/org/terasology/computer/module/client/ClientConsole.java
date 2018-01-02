@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.command;
+package org.terasology.computer.module.client;
 
-import org.terasology.computer.machine.Computer;
-
-public interface Command {
-    boolean run(Computer computer, String name, String[] args);
+public class ClientConsole {
 }

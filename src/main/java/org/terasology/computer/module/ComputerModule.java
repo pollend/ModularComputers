@@ -15,7 +15,11 @@
  */
 package org.terasology.computer.module;
 
+import org.terasology.computer.machine.Computer;
+import org.terasology.entitySystem.entity.EntityRef;
 
-@RegisterComputerModule(name = "terminal")
-public class TerminalModule {
+public interface ComputerModule {
+    void loadComputer(Computer computer);
+    void unloadComputer(Computer computer);
+    void onViewer(Computer computer, EntityRef viewer);
 }

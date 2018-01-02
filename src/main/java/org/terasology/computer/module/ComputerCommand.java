@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.command;
+package org.terasology.computer.module;
 
-@RegisterCommand(name = "run")
-public class LuaCommand implements Command {
-    @Override
-    public boolean run(String name, String[] args) {
-        return false;
-    }
+public @interface ComputerCommand {
+    String name();
+    String description();
 }

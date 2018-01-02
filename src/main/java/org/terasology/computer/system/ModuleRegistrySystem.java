@@ -18,6 +18,7 @@ package org.terasology.computer.system;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.terasology.computer.module.BaseComputerModule;
+import org.terasology.computer.module.ComputerCommand;
 import org.terasology.computer.module.ComputerMethod;
 import org.terasology.computer.module.RegisterComputerModule;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
@@ -54,6 +55,10 @@ public class ModuleRegistrySystem extends BaseComponentSystem {
 
     public static ComputerMethod getMethodInfo(Method method) {
         return method.getAnnotation(ComputerMethod.class);
+    }
+
+    public static ComputerCommand getCommandInfo(Method method) {
+        return method.getAnnotation(ComputerCommand.class);
     }
 
     public static Set<ComputerMethod> getMethodInfo(Iterable<Method> methods) {

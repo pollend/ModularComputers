@@ -15,11 +15,29 @@
  */
 package org.terasology.computer.module;
 
+import org.terasology.computer.machine.Computer;
+import org.terasology.entitySystem.entity.EntityRef;
+
 @RegisterComputerModule(name = "Inventory")
-public class InventoryModule {
+public class InventoryModule extends BaseComputerModule{
 
     @ComputerMethod(name = "dump", description = "This example moves all items from an inventory above the computer to inventory to the east of the computer. Please make sure this computer has a module of Inventory Manipulator type in any of its slots.")
     public void dump(){
+
+    }
+
+    @Override
+    public void loadComputer(Computer computer) {
+
+    }
+
+    @Override
+    public void unloadComputer(Computer computer) {
+
+    }
+
+    @Override
+    public void onViewer(Computer computer, EntityRef viewer) {
 
     }
 }

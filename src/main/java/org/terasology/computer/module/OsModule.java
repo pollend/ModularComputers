@@ -15,10 +15,39 @@
  */
 package org.terasology.computer.module;
 
-@RegisterComputerModule(name = "os")
-public class OsModule {
-    @ComputerMethod(name = "print", description = "")
-    public void dump(){
+import org.terasology.computer.machine.Computer;
+import org.terasology.entitySystem.entity.EntityRef;
 
+@RegisterComputerModule(name = "os")
+public class OsModule extends BaseComputerModule{
+
+    @ComputerMethod(name = "dump", description = "")
+    public void dump(Computer computer){
+
+    }
+
+    @ComputerCommand(name = "run", description = "")
+    public void run(Computer computer, String[] args){
+
+    }
+
+    @ComputerCommand(name = "edit", description = "")
+    public void touch(Computer computer, String[] args){
+
+    }
+
+    @Override
+    public void loadComputer(Computer computer) {
+
+    }
+
+    @Override
+    public void unloadComputer(Computer computer) {
+
+    }
+
+    @Override
+    public void onViewer(Computer computer, EntityRef viewer) {
+        
     }
 }

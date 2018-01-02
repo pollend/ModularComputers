@@ -15,8 +15,10 @@
  */
 package org.terasology.computer.command;
 
-import org.terasology.computer.machine.Computer;
+@RegisterCommand(name = "run")
+public class RunCommand   {
 
-public interface Command {
-    boolean run(Computer computer, String name, String[] args);
+    public boolean run(String name, String[] args) {
+        return false;
+    }
 }
