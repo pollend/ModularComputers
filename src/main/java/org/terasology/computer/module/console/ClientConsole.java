@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.module.client;
+package org.terasology.computer.module.console;
 
 public class ClientConsole {
 }

@@ -15,16 +15,14 @@
  */
 package org.terasology.computer.machine;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.terasology.computer.machine.event.ComputerStateEvent;
 import org.terasology.computer.module.BaseComputerModule;
 import org.terasology.computer.module.ComputerCommand;
-import org.terasology.computer.module.ConsoleModule;
+import org.terasology.computer.module.console.ConsoleModule;
 import org.terasology.computer.module.RegisterComputerModule;
-import org.terasology.computer.system.ModuleRegistrySystem;
 import org.terasology.entitySystem.entity.EntityRef;
-import org.terasology.entitySystem.systems.BaseComponentSystem;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,19 +30,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class Computer {
+
+
     private Set<Machine> machines = Sets.newLinkedHashSet();
     private Map<Class<? extends BaseComputerModule>, BaseComputerModule> moduleMap = Maps.newHashMap();
     private Map<String, BaseComputerModule> moduleInfoMap = Maps.newHashMap();
-
-    private Map<String, ComputerCommandInfo> commandInfoMap = Maps.newHashMap();
-
+    private Map<String, ComputerCommand.ComputerCommandInfo> commandInfoMap = Maps.newHashMap();
     private Set<Task> tasks = Sets.newLinkedHashSet();
     private EntityRef entityRef;
     private ComputerFileSystem fileSystem;
-    private String activeScreen;
-
+    private String state = "";
     private boolean exist = true;
-
     // players looking at the monitor
     private EntityRef viewer = null;
 
@@ -55,14 +51,14 @@ public class Computer {
     }
 
     public <T extends BaseComputerModule> boolean loadModule(Class<T> moduleClass, T module) {
-        RegisterComputerModule info = ModuleRegistrySystem.getModuleInfo(module);
+        RegisterComputerModule info = module.getClass().getAnnotation(RegisterComputerModule.class);
         if (info == null)
             return false;
 
         for (Method method : module.getClass().getMethods()) {
             ComputerCommand computerCommand = method.getAnnotation(ComputerCommand.class);
             if (computerCommand != null) {
-                commandInfoMap.put(computerCommand.name(), new ComputerCommandInfo(module, method));
+                commandInfoMap.put(computerCommand.name(), new ComputerCommand.ComputerCommandInfo(module, method));
             }
         }
 
@@ -82,7 +78,7 @@ public class Computer {
 
 
     public boolean command(String op, String[] args, boolean printCommand) {
-        ComputerCommandInfo info = commandInfoMap.get(op);
+        ComputerCommand.ComputerCommandInfo info = commandInfoMap.get(op);
         ConsoleModule consoleModule = (ConsoleModule) this.moduleMap.get(ConsoleModule.class);
         if (printCommand) {
             if (consoleModule != null) {
@@ -132,13 +128,15 @@ public class Computer {
         return fileSystem;
     }
 
-    public void setActiveScreen(String activeScreen) {
-        this.activeScreen = activeScreen;
+    public void setActiveState(String state) {
+        if(viewer != null)
+            this.viewer.send(new ComputerStateEvent(state,moduleInfoMap.keySet()));
+        this.state = state;
 
     }
 
-    public String getActiveScreen() {
-        return activeScreen;
+    public String getActiveState(){
+        return this.state;
     }
 
     public void destroy() {
@@ -153,11 +151,11 @@ public class Computer {
     }
 
     public void setViewer(EntityRef viewer) {
-        if(viewer == null)
-        {
-            for(BaseComputerModule module:moduleMap.values()){
-                module.onViewer(this,viewer);
+        if (viewer != null) {
+            for (BaseComputerModule module : moduleMap.values()) {
+                module.onViewer(this, viewer);
             }
+            this.viewer.send(new ComputerStateEvent(state,moduleInfoMap.keySet()));
 
         }
         this.viewer = viewer;
@@ -167,35 +165,5 @@ public class Computer {
         return viewer;
     }
 
-    public static class ComputerCommandInfo {
-        private BaseComputerModule module;
-        private String name;
-        private Method method;
 
-        public ComputerCommandInfo(BaseComputerModule module, Method method) {
-            this.module = module;
-            this.method = method;
-            this.name = name;
-        }
-
-        public Method getMethod() {
-            return method;
-        }
-
-        public BaseComputerModule getModule() {
-            return module;
-        }
-
-        public boolean invoke(Computer computer, String[] args) throws InvocationTargetException, IllegalAccessException {
-            Object[] result = new Object[args.length + 1];
-            result[0] = computer;
-            for (int x = 1; x < args.length + 1; x++)
-                result[x] = args[x - 1];
-            return (boolean) method.invoke(module, result);
-        }
-
-        public ComputerCommand getInfoMeta() {
-            return method.getAnnotation(ComputerCommand.class);
-        }
-    }
 }

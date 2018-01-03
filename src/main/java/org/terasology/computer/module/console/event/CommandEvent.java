@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.module;
+package org.terasology.computer.module.console.event;
 
-import org.terasology.computer.machine.Computer;
-import org.terasology.entitySystem.entity.EntityRef;
+import org.terasology.entitySystem.event.Event;
 
-public interface ComputerModule {
-    void loadComputer(Computer computer);
-    void unloadComputer(Computer computer);
-    void onViewer(Computer computer, EntityRef viewer);
-    void onStateChange(Computer computer, String state);
+public class CommandEvent implements Event {
+    private String command;
+    public CommandEvent(String command){
+        this.command = command;
+    }
+
+    public String getCommand() {
+        return command;
+    }
 }

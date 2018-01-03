@@ -13,10 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer;
+package org.terasology.computer.machine.event;
 
-public class Terminal {
+import org.terasology.entitySystem.event.Event;
+import org.terasology.network.ServerEvent;
 
-    public void print(String line){
+import java.util.List;
+import java.util.Set;
+
+@ServerEvent
+public class ComputerStateEvent implements Event {
+    private  String state;
+    private Set<String> modules;
+
+    public ComputerStateEvent(String state, Set<String> modules){
+        this.state = state;
+        this.modules = modules;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public Set<String> getModules() {
+        return modules;
     }
 }

@@ -19,8 +19,12 @@ import com.google.common.collect.Maps;
 import org.terasology.computer.component.ComputerComponent;
 import org.terasology.computer.component.ComputerTerminalComponent;
 import org.terasology.computer.machine.Computer;
+import org.terasology.computer.module.console.ConsoleModule;
+import org.terasology.computer.module.server.EditorModule;
+import org.terasology.computer.module.server.OsModule;
 import org.terasology.computer.ui.ComputerTerminalWindow;
 import org.terasology.entitySystem.entity.EntityRef;
+import org.terasology.entitySystem.entity.lifecycleEvents.BeforeDeactivateComponent;
 import org.terasology.entitySystem.entity.lifecycleEvents.OnActivatedComponent;
 import org.terasology.entitySystem.event.ReceiveEvent;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
@@ -35,31 +39,47 @@ import java.util.Map;
 
 @RegisterSystem(RegisterMode.AUTHORITY)
 public class ComputerSystem extends BaseComponentSystem {
-    private static final String COMPUTER_TERMINAL_UI = "ModularComputers:ComputerTerminal";
-
     @In
     private NUIManager nuiManager;
+
+    @In
+    private OsModule osModule;
+
+    @In
+    private ConsoleModule consoleModule;
+
+    @In
+    private EditorModule editorModule;
 
 
     private Map<EntityRef,Computer> computers = Maps.newHashMap();
 
-    public void computerLoadInWorld(OnActivatedComponent event, EntityRef computerEntity, BlockComponent block, ComputerComponent computer) {
+    @ReceiveEvent
+    public void computerLoadInWorld(OnActivatedComponent event, EntityRef entityRef, BlockComponent block, ComputerComponent computer) {
+        Computer comp =  buildComputer(entityRef);
+        computers.put(entityRef,comp);
+    }
 
+    @ReceiveEvent
+    public void computerUnloadedFromWorld(BeforeDeactivateComponent event, EntityRef entityRef, BlockComponent block, ComputerComponent computer) {
+        computers.remove(entityRef);
+
+    }
+
+    private Computer  buildComputer(EntityRef entityRef){
+       Computer computer = new Computer(entityRef);
+       computer.loadModule(OsModule.class,osModule);
+       computer.loadModule(ConsoleModule.class,consoleModule);
+       computer.loadModule(EditorModule.class,editorModule);
+       return computer;
     }
 
     @ReceiveEvent
     public void terminalActivated(ActivateEvent event, EntityRef item, ComputerTerminalComponent component) {
         EntityRef target = event.getTarget();
         if (target.hasComponent(ComputerComponent.class)) {
-            ComputerComponent computerComponent = target.getComponent(ComputerComponent.class);
-
-            EntityRef client = event.getInstigator();
-
-            nuiManager.pushScreen(COMPUTER_TERMINAL_UI);
-
-            //ComputerTerminalWindow window = (ComputerTerminalWindow) nuiManager.getScreen(COMPUTER_TERMINAL_UI);
-            //window.initializeTerminal(computerLanguageContextInitializer, clipboardManager, client, computerComponent.computerId);
-
+            Computer computer = computers.get(target);
+            computer.setViewer(target);
             event.consume();
         }
     }

@@ -15,28 +15,10 @@
  */
 package org.terasology.computer.module;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import org.terasology.computer.machine.Computer;
-import org.terasology.computer.machine.lua.LuaJMachine;
-import org.terasology.computer.system.ModuleRegistrySystem;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
 import org.terasology.registry.In;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
-
 public abstract class BaseComputerModule extends BaseComponentSystem implements ComputerModule {
 
-    @In
-    protected ModuleRegistrySystem moduleRegistrySystem;
 
-    @Override
-    public void initialise() {
-        super.initialise();
-        this.moduleRegistrySystem.RegisterModule(this);
-    }
 }

@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.module;
+package org.terasology.computer.module.server;
 
 import org.terasology.computer.machine.Computer;
+import org.terasology.computer.module.BaseComputerModule;
+import org.terasology.computer.module.ComputerCommand;
+import org.terasology.computer.module.ComputerMethod;
+import org.terasology.computer.module.RegisterComputerModule;
 import org.terasology.entitySystem.entity.EntityRef;
 
 @RegisterComputerModule(name = "os")
-public class OsModule extends BaseComputerModule{
+public class OsModule extends BaseComputerModule {
 
     @ComputerMethod(name = "dump", description = "")
     public void dump(Computer computer){
@@ -28,11 +32,6 @@ public class OsModule extends BaseComputerModule{
 
     @ComputerCommand(name = "run", description = "")
     public void run(Computer computer, String[] args){
-
-    }
-
-    @ComputerCommand(name = "edit", description = "")
-    public void touch(Computer computer, String[] args){
 
     }
 
@@ -48,6 +47,11 @@ public class OsModule extends BaseComputerModule{
 
     @Override
     public void onViewer(Computer computer, EntityRef viewer) {
-        
+
+    }
+
+    @Override
+    public void onStateChange(Computer computer, String state) {
+
     }
 }

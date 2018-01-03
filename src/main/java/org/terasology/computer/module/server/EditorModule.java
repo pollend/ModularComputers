@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.module;
+package org.terasology.computer.module.server;
 
 import org.terasology.computer.machine.Computer;
+import org.terasology.computer.module.BaseComputerModule;
+import org.terasology.computer.module.ComputerCommand;
+import org.terasology.computer.module.RegisterComputerModule;
 import org.terasology.entitySystem.entity.EntityRef;
 
-@RegisterComputerModule(name = "Inventory")
-public class InventoryModule extends BaseComputerModule{
 
-    @ComputerMethod(name = "dump", description = "This example moves all items from an inventory above the computer to inventory to the east of the computer. Please make sure this computer has a module of Inventory Manipulator type in any of its slots.")
-    public void dump(){
+@RegisterComputerModule(name = "editor")
+public class EditorModule extends BaseComputerModule {
+    public static String COMPUTER_EDITOR = "COMPUTER_EDITOR";
+
+    @ComputerCommand(name = "edit", description = "")
+    public void touch(Computer computer, String[] args){
 
     }
 
@@ -38,6 +43,11 @@ public class InventoryModule extends BaseComputerModule{
 
     @Override
     public void onViewer(Computer computer, EntityRef viewer) {
+
+    }
+
+    @Override
+    public void onStateChange(Computer computer, String state) {
 
     }
 }
