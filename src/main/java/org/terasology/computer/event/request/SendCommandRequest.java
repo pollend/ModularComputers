@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2017 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.event.client;
+package org.terasology.computer.event.request;
 
+import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.Event;
-import org.terasology.network.OwnerEvent;
+import org.terasology.network.ServerEvent;
 
-@OwnerEvent
-public class ProgramExecutionResultEvent implements Event {
-    private int computerId;
+@ServerEvent
+public class SendCommandRequest implements Event{
     private String message;
-
-    public ProgramExecutionResultEvent() {
-    }
-
-    public ProgramExecutionResultEvent(int computerId, String message) {
-        this.computerId = computerId;
+    private EntityRef entityRef;
+    public SendCommandRequest(EntityRef entityRef,String message){
         this.message = message;
-    }
-
-    public int getComputerId() {
-        return computerId;
+        this.entityRef = entityRef;
     }
 
     public String getMessage() {
         return message;
+    }
+
+    public EntityRef getEntityRef() {
+        return entityRef;
     }
 }

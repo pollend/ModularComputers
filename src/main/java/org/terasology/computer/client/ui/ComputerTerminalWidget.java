@@ -17,19 +17,6 @@ package org.terasology.computer.client.ui;
 
 import org.codehaus.plexus.util.StringUtils;
 import org.terasology.computer.client.ui.gui.PlayerCommandConsoleGui;
-import org.terasology.computer.client.ui.gui.ProgramEditingConsoleGui;
-import org.terasology.utilities.Assets;
-import org.terasology.computer.context.ComputerConsole;
-import org.terasology.computer.event.server.ConsoleListeningRegistrationEvent;
-import org.terasology.computer.event.server.CopyProgramEvent;
-import org.terasology.computer.event.server.DeleteProgramEvent;
-import org.terasology.computer.event.server.ExecuteProgramEvent;
-import org.terasology.computer.event.server.GetProgramTextEvent;
-import org.terasology.computer.event.server.ListProgramsEvent;
-import org.terasology.computer.event.server.RenameProgramEvent;
-import org.terasology.computer.event.server.SaveProgramEvent;
-import org.terasology.computer.event.server.StopProgramEvent;
-import org.terasology.computer.system.common.ComputerLanguageContextInitializer;
 import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.input.Keyboard;
 import org.terasology.input.device.KeyboardDevice;
@@ -47,10 +34,14 @@ import org.terasology.rendering.nui.HorizontalAlign;
 import org.terasology.rendering.nui.LayoutConfig;
 import org.terasology.rendering.nui.VerticalAlign;
 import org.terasology.rendering.nui.events.NUIKeyEvent;
+import org.terasology.utilities.Assets;
 
 import java.util.Collection;
 
 public class ComputerTerminalWidget extends CoreWidget {
+    public static final int CONSOLE_WIDTH = 87;
+    public static final int CONSOLE_HEIGHT = 35;
+
     public static final Color BACKGROUND_COLOR = new Color(0x111111ff);
     public static final Color FRAME_COLOR = new Color(0xffffffff);
 
@@ -73,19 +64,17 @@ public class ComputerTerminalWidget extends CoreWidget {
     private TerminalMode mode = TerminalMode.PLAYER_CONSOLE;
     private boolean editingProgram;
 
-    private ComputerConsole computerConsole;
+
 
     private Runnable closeRunnable;
     private EntityRef clientEntity;
     private int computerId;
 
     private PlayerCommandConsoleGui playerCommandConsoleGui;
-    private ProgramEditingConsoleGui programEditingConsoleGui;
 
-    public void setup(ComputerLanguageContextInitializer computerLanguageContextInitializer, ClipboardManager clipboardManager,
+    public void setup(ClipboardManager clipboardManager,
                       Runnable closeRunnable, EntityRef clientEntity, int computerId) {
         editingProgram = false;
-        computerConsole = new ComputerConsole();
 
         this.closeRunnable = closeRunnable;
         this.clientEntity = clientEntity;
@@ -95,13 +84,13 @@ public class ComputerTerminalWidget extends CoreWidget {
         playerCommandConsoleGui.appendToConsole("AutomationOS v. 0.0");
         String userName = clientEntity.getComponent(CharacterComponent.class).controller.getComponent(ClientComponent.class).clientInfo.getComponent(DisplayNameComponent.class).name;
         playerCommandConsoleGui.appendToConsole("You're logged in as " + userName + ", use \"exit\" command to exit the console, use \"help\" to list commands.");
-        programEditingConsoleGui = new ProgramEditingConsoleGui(this, computerLanguageContextInitializer, clipboardManager);
+       // programEditingConsoleGui = new ProgramEditingConsoleGui(this, computerLanguageContextInitializer, clipboardManager);
 
-        this.clientEntity.send(new ConsoleListeningRegistrationEvent(this.computerId, true));
+        //this.clientEntity.send(new ConsoleListeningRegistrationEvent(this.computerId, true));
     }
 
     public void saveProgram(String programName, String code) {
-        clientEntity.send(new SaveProgramEvent(computerId, programName, code));
+       // clientEntity.send(new SaveProgramEvent(computerId, programName, code));
     }
 
     public int getComputerId() {
@@ -113,7 +102,7 @@ public class ComputerTerminalWidget extends CoreWidget {
     }
 
     public void onClosed() {
-        clientEntity.send(new ConsoleListeningRegistrationEvent(computerId, false));
+        //clientEntity.send(new ConsoleListeningRegistrationEvent(computerId, false));
     }
 
     public void appendToPlayerConsole(String text) {
@@ -161,28 +150,28 @@ public class ComputerTerminalWidget extends CoreWidget {
 
     @Override
     public Vector2i getPreferredContentSize(Canvas canvas, Vector2i sizeHint) {
-        int width = PADDING_HOR * 2 + characterWidth * ComputerConsole.CONSOLE_WIDTH;
-        int height = PADDING_VER * 2 + fontHeight * ComputerConsole.CONSOLE_HEIGHT;
+        int width = PADDING_HOR * 2 + characterWidth * CONSOLE_WIDTH;
+        int height = PADDING_VER * 2 + fontHeight * CONSOLE_HEIGHT;
         return new Vector2i(width, height);
     }
 
     protected void requestSave(String programName, String programText) {
-        clientEntity.send(new SaveProgramEvent(computerId, programName, programText));
+        //clientEntity.send(new SaveProgramEvent(computerId, programName, programText));
     }
 
     private void drawPlayerConsole(Canvas canvas, boolean focused) {
         if (editingProgram) {
-            programEditingConsoleGui.drawEditProgramConsole(canvas, focused, PADDING_HOR, PADDING_VER, characterWidth, fontHeight);
+         //   programEditingConsoleGui.drawEditProgramConsole(canvas, focused, PADDING_HOR, PADDING_VER, characterWidth, fontHeight);
         } else {
             playerCommandConsoleGui.drawPlayerCommandConsole(canvas, focused, PADDING_HOR, PADDING_VER, characterWidth, fontHeight);
         }
     }
 
     private void drawComputerConsole(Canvas canvas) {
-        final String[] consoleLines = computerConsole.getLines();
+        /*final String[] consoleLines = computerConsole.getLines();
         for (int i = 0; i < consoleLines.length; i++) {
             drawMonospacedText(canvas, consoleLines[i], PADDING_HOR, PADDING_VER + i * fontHeight, COMPUTER_CONSOLE_TEXT_COLOR);
-        }
+        }*/
     }
 
     public void drawVerticalLine(Canvas canvas, int x, int y1, int y2, Color color) {
@@ -225,8 +214,8 @@ public class ComputerTerminalWidget extends CoreWidget {
                 if (mode == TerminalMode.PLAYER_CONSOLE) {
                     if (editingProgram) {
                         KeyboardDevice keyboard = event.getKeyboard();
-                        programEditingConsoleGui.keyTypedInEditingProgram(character, keyboardCharId,
-                                keyboard.isKeyDown(Keyboard.KeyId.LEFT_CTRL) || keyboard.isKeyDown(Keyboard.KeyId.RIGHT_CTRL));
+//                        programEditingConsoleGui.keyTypedInEditingProgram(character, keyboardCharId,
+//                                keyboard.isKeyDown(Keyboard.KeyId.LEFT_CTRL) || keyboard.isKeyDown(Keyboard.KeyId.RIGHT_CTRL));
                     } else {
                         playerCommandConsoleGui.keyTypedInPlayerConsole(character, keyboardCharId);
                     }
@@ -262,7 +251,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                     playerCommandConsoleGui.appendToConsole("Downloading program...");
 
                     playerCommandConsoleGui.setReadOnly(true);
-                    clientEntity.send(new GetProgramTextEvent(computerId, programName));
+                   // clientEntity.send(new GetProgramTextEvent(computerId, programName));
                 }
             } else if (commandParts[0].equals("execute")) {
                 if (commandParts.length < 2) {
@@ -275,7 +264,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                     for (int i = 0; i < commandParts.length - 2; i++) {
                         arguments[i] = commandParts[i + 2];
                     }
-                    clientEntity.send(new ExecuteProgramEvent(computerId, commandParts[1], arguments));
+                    //clientEntity.send(new ExecuteProgramEvent(computerId, commandParts[1], arguments));
                 }
             } else if (commandParts[0].equals("list")) {
                 if (commandParts.length > 1) {
@@ -285,7 +274,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                     playerCommandConsoleGui.appendToConsole("Retrieving list of programs...");
 
                     playerCommandConsoleGui.setReadOnly(true);
-                    clientEntity.send(new ListProgramsEvent(computerId));
+                    //clientEntity.send(new ListProgramsEvent(computerId));
                 }
             } else if (commandParts[0].equals("delete")) {
                 if (commandParts.length != 2) {
@@ -294,7 +283,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                 } else if (!isValidProgramName(commandParts[1])) {
                     playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
                 } else {
-                    clientEntity.send(new DeleteProgramEvent(computerId, commandParts[1]));
+                   // clientEntity.send(new DeleteProgramEvent(computerId, commandParts[1]));
                 }
             } else if (commandParts[0].equals("copy")) {
                 if (commandParts.length != 3) {
@@ -303,7 +292,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                 } else if (!isValidProgramName(commandParts[1]) || !isValidProgramName(commandParts[2])) {
                     playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
                 } else {
-                    clientEntity.send(new CopyProgramEvent(computerId, commandParts[1], commandParts[2]));
+                   // clientEntity.send(new CopyProgramEvent(computerId, commandParts[1], commandParts[2]));
                 }
             } else if (commandParts[0].equals("rename")) {
                 if (commandParts.length != 3) {
@@ -312,14 +301,14 @@ public class ComputerTerminalWidget extends CoreWidget {
                 } else if (!isValidProgramName(commandParts[1]) || !isValidProgramName(commandParts[2])) {
                     playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
                 } else {
-                    clientEntity.send(new RenameProgramEvent(computerId, commandParts[1], commandParts[2]));
+                    //clientEntity.send(new RenameProgramEvent(computerId, commandParts[1], commandParts[2]));
                 }
             } else if (commandParts[0].equals("stop")) {
                 if (commandParts.length > 1) {
                     playerCommandConsoleGui.appendToConsole("Usage:");
                     playerCommandConsoleGui.appendToConsole("stop - stops currently running program");
                 } else {
-                    clientEntity.send(new StopProgramEvent(computerId));
+                   // clientEntity.send(new StopProgramEvent(computerId));
                 }
             } else {
                 if (commandParts[0].length() > 0) {
@@ -354,15 +343,15 @@ public class ComputerTerminalWidget extends CoreWidget {
     }
 
     public void clearComputerConsole() {
-        computerConsole.clearConsole();
+      //  computerConsole.clearConsole();
     }
 
     public void setComputerConsoleState(String[] lines) {
-        computerConsole.setConsoleState(lines);
+      //  computerConsole.setConsoleState(lines);
     }
 
     public void setComputerConsoleCharacters(int x, int y, String text) {
-        computerConsole.setCharacters(x, y, text);
+        //computerConsole.setCharacters(x, y, text);
     }
 
     public void appendComputerConsoleLines(String[] lines) {
@@ -374,13 +363,13 @@ public class ComputerTerminalWidget extends CoreWidget {
             result.append(lines[i]);
         }
 
-        computerConsole.appendString(result.toString());
+        //computerConsole.appendString(result.toString());
     }
 
     public void setProgramText(String programName, String programText) {
         playerCommandConsoleGui.setReadOnly(false);
         editingProgram = true;
-        programEditingConsoleGui.setProgramText(programName, programText);
+      //  programEditingConsoleGui.setProgramText(programName, programText);
     }
 
     public enum TerminalMode {

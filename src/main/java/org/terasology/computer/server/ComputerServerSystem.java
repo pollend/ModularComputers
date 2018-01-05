@@ -17,13 +17,11 @@ package org.terasology.computer.server;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import org.luaj.vm2.ast.Str;
 import org.terasology.computer.component.ComputerComponent;
 import org.terasology.computer.component.ComputerTerminalComponent;
-import org.terasology.computer.server.event.OnComputerLoaded;
-import org.terasology.computer.server.event.OnComputerUnload;
-import org.terasology.computer.server.event.OnDisplayActivated;
+import org.terasology.computer.event.OnComputerLoaded;
+import org.terasology.computer.event.OnComputerUnload;
+import org.terasology.computer.event.OnDisplayActivated;
 import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.entity.lifecycleEvents.BeforeDeactivateComponent;
 import org.terasology.entitySystem.entity.lifecycleEvents.OnActivatedComponent;
@@ -35,12 +33,10 @@ import org.terasology.entitySystem.systems.UpdateSubscriberSystem;
 import org.terasology.logic.common.ActivateEvent;
 import org.terasology.world.block.BlockComponent;
 
-import javax.activation.CommandInfo;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
 @RegisterSystem(RegisterMode.AUTHORITY)
 public class ComputerServerSystem extends BaseComponentSystem implements UpdateSubscriberSystem {
@@ -79,13 +75,13 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
     public void computerLoadInWorld(OnActivatedComponent event, EntityRef entityRef, BlockComponent block, ComputerComponent computer) {
         ComputerContext context = new ComputerContext(entityRef, this);
         contexts.put(entityRef, context);
-        entityRef.send(new OnComputerLoaded(context));
+        entityRef.send(new OnComputerLoaded());
     }
 
     @ReceiveEvent
     public void computerUnloadedFromWorld(BeforeDeactivateComponent event, EntityRef entityRef, BlockComponent block, ComputerComponent computer) {
         ComputerContext computerContext = contexts.remove(entityRef);
-        entityRef.send(new OnComputerUnload(computerContext));
+        entityRef.send(new OnComputerUnload());
     }
 
     @ReceiveEvent
@@ -95,7 +91,7 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
             ComputerContext computerContext = getComputerContext(target);
             if (computerContext != null) {
                 computerContext.setViewer(event.getInstigator());
-                target.send(new OnDisplayActivated(computerContext, event.getInstigator()));
+                target.send(new OnDisplayActivated(event.getInstigator()));
             }
             event.consume();
         }
@@ -110,10 +106,12 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
 
     public static class ComputerModuleInfo<T extends BaseComponentSystem> {
         private T module;
+        private String name;
         private Map<String, LinkedList<Method>> methoMap = Maps.newHashMap();
         private Map<String, Method> commandMap = Maps.newHashMap();
 
         public ComputerModuleInfo(T module) {
+            name = module.getClass().getAnnotation(RegisterComputerModule.class).name();
             this.module = module;
             for (Method method : module.getClass().getMethods()) {
                 ComputerMethod computerMethod = method.getAnnotation(ComputerMethod.class);
@@ -128,6 +126,10 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
             }
         }
 
+        public String getName() {
+            return name;
+        }
+
         public T getModule() {
             return module;
         }
@@ -136,7 +138,7 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
             return methoMap.containsKey(methodName);
         }
 
-        public boolean hascommand(String commandName) {
+        public boolean hasCommand(String commandName) {
             return commandMap.containsKey(commandName);
         }
 
@@ -148,12 +150,12 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
         public boolean invokeCommand(ComputerContext computer, String commandName, String[] args) throws InvocationTargetException, IllegalAccessException {
             Method method = commandMap.get(commandName);
             if (method == null)
-                return false;
+                return false ;
             Object[] result = new Object[args.length + 1];
             result[0] = computer;
             for (int x = 1; x < args.length + 1; x++)
                 result[x] = args[x - 1];
-            return (boolean) method.invoke(module, result);
+             return (boolean) method.invoke(module, result);
         }
     }
 }

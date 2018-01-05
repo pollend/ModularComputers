@@ -15,5 +15,39 @@
  */
 package org.terasology.computer.client;
 
-public class ComputerClientSystem {
+import org.terasology.computer.client.ui.ComputerTerminalWindow;
+import org.terasology.computer.component.ComputerComponent;
+import org.terasology.computer.component.ComputerTerminalComponent;
+import org.terasology.entitySystem.entity.EntityRef;
+import org.terasology.entitySystem.event.ReceiveEvent;
+import org.terasology.entitySystem.systems.BaseComponentSystem;
+import org.terasology.entitySystem.systems.RegisterMode;
+import org.terasology.entitySystem.systems.RegisterSystem;
+import org.terasology.logic.common.ActivateEvent;
+import org.terasology.registry.In;
+import org.terasology.rendering.nui.NUIManager;
+
+@RegisterSystem(RegisterMode.CLIENT)
+public class ComputerClientSystem extends BaseComponentSystem {
+    private static final String COMPUTER_TERMINAL_UI = "ModularComputers:ComputerTerminal";
+
+    @In
+    private NUIManager nuiManager;
+
+    @ReceiveEvent
+    public void terminalActivated(ActivateEvent event, EntityRef item, ComputerComponent component) {
+        EntityRef target = event.getTarget();
+        if (target.hasComponent(ComputerComponent.class)) {
+            ComputerComponent computerComponent = target.getComponent(ComputerComponent.class);
+
+            EntityRef client = event.getInstigator();
+
+            nuiManager.pushScreen(COMPUTER_TERMINAL_UI);
+
+            ComputerTerminalWindow window = (ComputerTerminalWindow) nuiManager.getScreen(COMPUTER_TERMINAL_UI);
+            event.consume();
+        }
+    }
+
+
 }

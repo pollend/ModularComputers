@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2017 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.event.client.console;
+package org.terasology.computer.event;
 
+import org.terasology.computer.server.ComputerContext;
+import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.Event;
-import org.terasology.network.OwnerEvent;
 
-@OwnerEvent
-public class AppendConsoleLinesEvent implements Event {
-    private int computerId;
-    private String[] lines;
-
-    public AppendConsoleLinesEvent() {
-    }
-
-    public AppendConsoleLinesEvent(int computerId, String[] lines) {
-        this.computerId = computerId;
-        this.lines = lines;
-    }
-
-    public int getComputerId() {
-        return computerId;
-    }
-
-    public String[] getLines() {
-        return lines;
-    }
+public class OnComputerLoaded implements Event {
 }

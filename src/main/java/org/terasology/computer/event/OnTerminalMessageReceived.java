@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2017 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.event.server;
+package org.terasology.computer.event;
 
+import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.Event;
-import org.terasology.network.ServerEvent;
+import org.terasology.network.OwnerEvent;
 
-@ServerEvent
-public class StopProgramEvent implements Event {
-    private int computerId;
+@OwnerEvent
+public class OnTerminalMessageReceived implements Event {
+    private String message;
 
-    public StopProgramEvent() {
+    public OnTerminalMessageReceived(String message) {
+        this.message = message;
     }
 
-    public StopProgramEvent(int computerId) {
-        this.computerId = computerId;
-    }
-
-    public int getComputerId() {
-        return computerId;
+    public String getMessage() {
+        return message;
     }
 }

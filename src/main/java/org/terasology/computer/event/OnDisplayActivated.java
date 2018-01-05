@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 MovingBlocks
+ * Copyright 2017 MovingBlocks
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.event.client;
+package org.terasology.computer.event;
 
+import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.Event;
-import org.terasology.network.OwnerEvent;
 
-import java.util.Collection;
+public class OnDisplayActivated implements Event {
+    private EntityRef instigator;
 
-@OwnerEvent
-public class ProgramListReceivedEvent implements Event {
-    private int computerId;
-    private Collection<String> programs;
-
-    public ProgramListReceivedEvent() {
+    public OnDisplayActivated(EntityRef instigator) {
+        this.instigator = instigator;
     }
 
-    public ProgramListReceivedEvent(int computerId, Collection<String> programs) {
-        this.computerId = computerId;
-        this.programs = programs;
-    }
-
-    public int getComputerId() {
-        return computerId;
-    }
-
-    public Collection<String> getPrograms() {
-        return programs;
+    public EntityRef getInstigator() {
+        return instigator;
     }
 }

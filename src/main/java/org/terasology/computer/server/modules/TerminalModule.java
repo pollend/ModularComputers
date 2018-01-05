@@ -15,6 +15,7 @@
  */
 package org.terasology.computer.server.modules;
 
+import org.terasology.computer.event.OnTerminalMessageReceived;
 import org.terasology.computer.server.ComputerCommand;
 import org.terasology.computer.server.ComputerContext;
 import org.terasology.computer.server.ComputerMethod;
@@ -25,13 +26,23 @@ import org.terasology.entitySystem.systems.BaseComponentSystem;
 public class TerminalModule extends BaseComponentSystem {
     @ComputerMethod(name = "println", description = "")
     public void println(ComputerContext computer, String str) {
-
+        computer.getEntityRef().send(new OnTerminalMessageReceived(str));
     }
 
     @ComputerMethod(name = "print", description = "")
     public void print(ComputerContext computer, String str) {
 
     }
+
+    @ComputerCommand(name = "echo", description = "")
+    public boolean run(ComputerContext computer, String[] args){
+        if(args.length == 1) {
+            computer.getEntityRef().send(new OnTerminalMessageReceived(args[0]));
+            return true;
+        }
+        return false;
+    }
+
 //
 //    @ComputerCommand(name = "ls", description = "")
 //    public void list(Context computer, String[] args) {

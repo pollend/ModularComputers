@@ -16,7 +16,6 @@
 package org.terasology.computer.client.ui.gui;
 
 import org.lwjgl.input.Keyboard;
-import org.terasology.computer.context.ComputerConsole;
 import org.terasology.computer.client.ui.ComputerTerminalWidget;
 import org.terasology.rendering.nui.Canvas;
 import org.terasology.rendering.nui.Color;
@@ -30,7 +29,7 @@ public class PlayerCommandConsoleGui {
     public static final Color PLAYER_CONSOLE_CURSOR_COLOR = new Color(0xff0000ff);
     private static final int BLINK_LENGTH = 20;
 
-    private ComputerConsole playerConsole = new ComputerConsole();
+    //private ComputerConsole playerConsole = new ComputerConsole();
     private StringBuilder currentCommand = new StringBuilder();
     private int cursorPositionInPlayerCommand = 0;
     private int currentCommandDisplayStartIndex = 0;
@@ -53,25 +52,25 @@ public class PlayerCommandConsoleGui {
     }
 
     public void drawPlayerCommandConsole(Canvas canvas, boolean focused, int x, int y, int characterWidth, int fontHeight) {
-        final String[] consoleLines = playerConsole.getLines();
-        // Draw all lines but first (we need to fill current edited line at the bottom)
-        for (int i = 1; i < consoleLines.length; i++)
-            computerTerminalWidget.drawMonospacedText(canvas, consoleLines[i], x, y + (i - 1) * fontHeight, PLAYER_CONSOLE_TEXT_COLOR);
-
-        if (!readOnly) {
-            String wholeCommandLine = ">" + currentCommand.toString();
-            String commandLine = wholeCommandLine.substring(currentCommandDisplayStartIndex, Math.min(currentCommandDisplayStartIndex + ComputerConsole.CONSOLE_WIDTH, wholeCommandLine.length()));
-            int cursorPositionInDisplayedCommandLine = 1 + cursorPositionInPlayerCommand - currentCommandDisplayStartIndex;
-
-            final int lastLineY = y + fontHeight * (ComputerConsole.CONSOLE_HEIGHT - 1);
-            computerTerminalWidget.drawMonospacedText(canvas, commandLine, x, lastLineY, COMMAND_LINE_TEXT_COLOR);
-
-            if (focused) {
-                blinkDrawTick = ((++blinkDrawTick) % BLINK_LENGTH);
-                if (blinkDrawTick * 2 > BLINK_LENGTH)
-                    computerTerminalWidget.drawVerticalLine(canvas, x + cursorPositionInDisplayedCommandLine * characterWidth - 1, 1 + lastLineY, lastLineY + fontHeight, PLAYER_CONSOLE_CURSOR_COLOR);
-            }
-        }
+//        final String[] consoleLines = playerConsole.getLines();
+//        // Draw all lines but first (we need to fill current edited line at the bottom)
+//        for (int i = 1; i < consoleLines.length; i++)
+//            computerTerminalWidget.drawMonospacedText(canvas, consoleLines[i], x, y + (i - 1) * fontHeight, PLAYER_CONSOLE_TEXT_COLOR);
+//
+//        if (!readOnly) {
+//            String wholeCommandLine = ">" + currentCommand.toString();
+//            String commandLine = wholeCommandLine.substring(currentCommandDisplayStartIndex, Math.min(currentCommandDisplayStartIndex + ComputerConsole.CONSOLE_WIDTH, wholeCommandLine.length()));
+//            int cursorPositionInDisplayedCommandLine = 1 + cursorPositionInPlayerCommand - currentCommandDisplayStartIndex;
+//
+//            final int lastLineY = y + fontHeight * (ComputerConsole.CONSOLE_HEIGHT - 1);
+//            computerTerminalWidget.drawMonospacedText(canvas, commandLine, x, lastLineY, COMMAND_LINE_TEXT_COLOR);
+//
+//            if (focused) {
+//                blinkDrawTick = ((++blinkDrawTick) % BLINK_LENGTH);
+//                if (blinkDrawTick * 2 > BLINK_LENGTH)
+//                    computerTerminalWidget.drawVerticalLine(canvas, x + cursorPositionInDisplayedCommandLine * characterWidth - 1, 1 + lastLineY, lastLineY + fontHeight, PLAYER_CONSOLE_CURSOR_COLOR);
+//            }
+//        }
     }
 
     public void keyTypedInPlayerConsole(char character, int keyboardCharId) {
@@ -96,9 +95,9 @@ public class PlayerCommandConsoleGui {
                 String command = currentCommand.toString().trim();
                 if (command.length() > 0) {
                     appendToHistory(command);
-                    playerConsole.appendString(">" + command);
+                   // playerConsole.appendString(">" + command);
 
-                    computerTerminalWidget.executeCommand(command);
+                  //  computerTerminalWidget.executeCommand(command);
                     currentCommand = new StringBuilder();
                     cursorPositionInPlayerCommand = 0;
                 }
@@ -124,17 +123,17 @@ public class PlayerCommandConsoleGui {
 
             // Adjust start position
             int lineLength = currentCommand.length() + 1;
-            if (lineLength <= ComputerConsole.CONSOLE_WIDTH)
-                currentCommandDisplayStartIndex = 0;
-            else {
-                int cursorPositionInCommand = 1 + cursorPositionInPlayerCommand;
-                if (currentCommandDisplayStartIndex + ComputerConsole.CONSOLE_WIDTH > lineLength)
-                    currentCommandDisplayStartIndex = lineLength - ComputerConsole.CONSOLE_WIDTH;
-                else if (cursorPositionInCommand > ComputerConsole.CONSOLE_WIDTH + currentCommandDisplayStartIndex)
-                    currentCommandDisplayStartIndex = cursorPositionInCommand - ComputerConsole.CONSOLE_WIDTH;
-                else if (cursorPositionInCommand - 1 < currentCommandDisplayStartIndex)
-                    currentCommandDisplayStartIndex = cursorPositionInCommand - 1;
-            }
+//            if (lineLength <= ComputerConsole.CONSOLE_WIDTH)
+//                currentCommandDisplayStartIndex = 0;
+//            else {
+//                int cursorPositionInCommand = 1 + cursorPositionInPlayerCommand;
+//                if (currentCommandDisplayStartIndex + ComputerConsole.CONSOLE_WIDTH > lineLength)
+//                    currentCommandDisplayStartIndex = lineLength - ComputerConsole.CONSOLE_WIDTH;
+//                else if (cursorPositionInCommand > ComputerConsole.CONSOLE_WIDTH + currentCommandDisplayStartIndex)
+//                    currentCommandDisplayStartIndex = cursorPositionInCommand - ComputerConsole.CONSOLE_WIDTH;
+//                else if (cursorPositionInCommand - 1 < currentCommandDisplayStartIndex)
+//                    currentCommandDisplayStartIndex = cursorPositionInCommand - 1;
+//            }
         }
     }
 
@@ -147,6 +146,6 @@ public class PlayerCommandConsoleGui {
     }
 
     public void appendToConsole(String text) {
-        playerConsole.appendString(text);
+   //     playerConsole.appendString(text);
     }
 }

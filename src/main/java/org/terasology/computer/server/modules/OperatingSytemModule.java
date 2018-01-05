@@ -16,21 +16,28 @@
 package org.terasology.computer.server.modules;
 
 import org.terasology.computer.component.FilesystemComponent;
+import org.terasology.computer.event.OnComputerLoaded;
+import org.terasology.computer.event.OnTerminalMessageReceived;
+import org.terasology.computer.event.request.SendCommandRequest;
 import org.terasology.computer.server.ComputerContext;
 import org.terasology.computer.server.ComputerCommand;
 import org.terasology.computer.server.ComputerMethod;
 import org.terasology.computer.server.ComputerServerSystem;
 import org.terasology.computer.server.RegisterComputerModule;
-import org.terasology.computer.server.event.OnComputerLoaded;
+import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.ReceiveEvent;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
 import org.terasology.registry.In;
+
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 
 @RegisterComputerModule(name = "os")
 public class OperatingSytemModule extends BaseComponentSystem {
 
     @In
     private ComputerServerSystem computerServerSystem;
+
     @In
     private GUIModule guiModule;
     @In
@@ -50,8 +57,8 @@ public class OperatingSytemModule extends BaseComponentSystem {
 
     @ComputerCommand(name = "run", description = "")
     public void run(ComputerContext computer, String[] args){
-
     }
+
     @ComputerCommand(name = "cd", description = "")
     public void changeDirectory(ComputerContext computer, String[] args){
 
@@ -74,43 +81,46 @@ public class OperatingSytemModule extends BaseComponentSystem {
 
 
     @ReceiveEvent
-    public void onComputerLoaded(OnComputerLoaded computerLoaded){
-        ComputerContext context = computerLoaded.getContext();
+    public void onComputerLoaded(OnComputerLoaded computerLoaded, EntityRef entityRef){
+        ComputerContext context = computerServerSystem.getComputerContext(entityRef);
         if(!context.getEntityRef().hasComponent(FilesystemComponent.class))
             context.getEntityRef().addComponent(new FilesystemComponent());
 
     }
+    @ReceiveEvent
+    public void onCommandRequest(SendCommandRequest sendCommandRequest,EntityRef player){
+        String message = sendCommandRequest.getMessage();
+        String[] entries = message.split(" ");
+        String[] args = new String[entries.length-1];
+        for(int  x = 0; x < args.length;x++){
+            args[x] = entries[x+1];
+        }
+        ComputerContext context = computerServerSystem.getComputerContext(sendCommandRequest.getEntityRef());
+        this.command(context,entries[0],args);
+
+    }
 
 
-//    public boolean command(ComputerContext computer,String op, String[] args, boolean printCommand) {
-//        ComputerCommand.ComputerCommandInfo info = commandInfoMap.get(op);
-//        TerminalModule consoleModule = (TerminalModule) this.moduleMap.get(TerminalModule.class);
-//        if (printCommand) {
-//            if (consoleModule != null) {
-//                consoleModule.println(this, op + " " + String.join(" ", args));
-//            }
-//        }
-//        if (info != null) {
-//            try {
-//                if (!info.invoke(this, args)) {
-//                    if (consoleModule != null) {
-//                        consoleModule.println(this, "Unknown Command: " + op);
-//                        return false;
-//                    }
-//                }
-//                return true;
-//            } catch (InvocationTargetException e) {
-//                e.printStackTrace();
-//            } catch (IllegalAccessException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        if (consoleModule != null) {
-//            consoleModule.println(this, "Unknown Command: " + op);
-//        }
-//        return false;
-//
-//    }
+    public boolean command(ComputerContext computer,String op, String[] args) {
+        for(ComputerServerSystem.ComputerModuleInfo info: computerServerSystem.getComputerModules()){
+            if(info.hasCommand(op))
+            {
+                terminalModule.println(computer,op + " " + String.join(" ",args));
+                try {
+                    if(info.invokeCommand(computer,op,args)) {
+                        return true;
+                    }
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                return true;
+
+            }
+        }
+        terminalModule.println(computer,"Unknown Command: " + op);
+        return false;
+    }
 
 }
