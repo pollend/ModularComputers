@@ -15,8 +15,10 @@
  */
 package org.terasology.computer.server;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.luaj.vm2.ast.Str;
 import org.terasology.computer.component.ComputerComponent;
 import org.terasology.computer.component.ComputerTerminalComponent;
 import org.terasology.computer.server.event.OnComputerLoaded;
@@ -33,6 +35,10 @@ import org.terasology.entitySystem.systems.UpdateSubscriberSystem;
 import org.terasology.logic.common.ActivateEvent;
 import org.terasology.world.block.BlockComponent;
 
+import javax.activation.CommandInfo;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,18 +46,29 @@ import java.util.Set;
 public class ComputerServerSystem extends BaseComponentSystem implements UpdateSubscriberSystem {
 
     private Map<EntityRef, ComputerContext> contexts = Maps.newHashMap();
-    private Set<BaseComponentSystem> componentSystems = Sets.newLinkedHashSet();
+    private Map<Class<? extends BaseComponentSystem>, ComputerModuleInfo> computerModuleInfoMap = Maps.newHashMap();
+    ;
 
-    public boolean loadModule(BaseComponentSystem componentSystem) {
+    private Map<Class<? extends Machine>, Machine> computerMachines = Maps.newHashMap();
+
+
+    public <T extends BaseComponentSystem> boolean loadModule(T componentSystem) {
         if (!componentSystem.getClass().isAnnotationPresent(RegisterComputerModule.class)) {
             return false;
         }
-        componentSystems.add(componentSystem);
+        computerModuleInfoMap.put(componentSystem.getClass(), new ComputerModuleInfo<T>(componentSystem));
         return true;
     }
 
-    public Iterable<BaseComponentSystem> getComputerModules() {
-        return componentSystems;
+    public Iterable<ComputerModuleInfo> getComputerModules() {
+        return computerModuleInfoMap.values();
+    }
+
+    public <T extends BaseComponentSystem> T getComputerModule(Class<T> classz) {
+        ComputerModuleInfo moduleInfo = computerModuleInfoMap.get(classz);
+        if (moduleInfo == null)
+            return null;
+        return (T) moduleInfo.getModule();
     }
 
     public ComputerContext getComputerContext(EntityRef entityRef) {
@@ -88,6 +105,55 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
     public void update(float delta) {
         for (ComputerContext context : contexts.values()) {
 
+        }
+    }
+
+    public static class ComputerModuleInfo<T extends BaseComponentSystem> {
+        private T module;
+        private Map<String, LinkedList<Method>> methoMap = Maps.newHashMap();
+        private Map<String, Method> commandMap = Maps.newHashMap();
+
+        public ComputerModuleInfo(T module) {
+            this.module = module;
+            for (Method method : module.getClass().getMethods()) {
+                ComputerMethod computerMethod = method.getAnnotation(ComputerMethod.class);
+                if (computerMethod != null) {
+                    LinkedList<Method> methods = methoMap.putIfAbsent(computerMethod.name(), Lists.newLinkedList());
+                    methods.add(method);
+                }
+                ComputerCommand computerCommand = method.getAnnotation(ComputerCommand.class);
+                if (computerCommand != null) {
+                    commandMap.put(computerCommand.name(), method);
+                }
+            }
+        }
+
+        public T getModule() {
+            return module;
+        }
+
+        public boolean hasMethod(String methodName) {
+            return methoMap.containsKey(methodName);
+        }
+
+        public boolean hascommand(String commandName) {
+            return commandMap.containsKey(commandName);
+        }
+
+        public boolean invokeMethod(ComputerContext context, String methodName, Object[] objects) {
+            //TODO: implement a handler for methodinfo
+            return false;
+        }
+
+        public boolean invokeCommand(ComputerContext computer, String commandName, String[] args) throws InvocationTargetException, IllegalAccessException {
+            Method method = commandMap.get(commandName);
+            if (method == null)
+                return false;
+            Object[] result = new Object[args.length + 1];
+            result[0] = computer;
+            for (int x = 1; x < args.length + 1; x++)
+                result[x] = args[x - 1];
+            return (boolean) method.invoke(module, result);
         }
     }
 }

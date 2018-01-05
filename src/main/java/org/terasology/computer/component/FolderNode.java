@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server;
+package org.terasology.computer.component;
 
+import org.terasology.reflection.MappedContainer;
 
-import org.terasology.entitySystem.systems.BaseComponentSystem;
+import java.util.Map;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-public @interface ComputerCommand {
-    String name();
-    String description();
-
+@MappedContainer
+public class FolderNode {
+    public Map<String, FolderNode> folders;
+    public Map<String, String> files;
 }

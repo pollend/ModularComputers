@@ -15,14 +15,5 @@
  */
 package org.terasology.computer.server;
 
-
-import org.terasology.entitySystem.systems.BaseComponentSystem;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-public @interface ComputerCommand {
-    String name();
-    String description();
-
+public interface Machine {
 }

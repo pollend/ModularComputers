@@ -15,11 +15,14 @@
  */
 package org.terasology.computer.server.modules;
 
+import org.terasology.computer.component.FilesystemComponent;
 import org.terasology.computer.server.ComputerContext;
 import org.terasology.computer.server.ComputerCommand;
 import org.terasology.computer.server.ComputerMethod;
 import org.terasology.computer.server.ComputerServerSystem;
 import org.terasology.computer.server.RegisterComputerModule;
+import org.terasology.computer.server.event.OnComputerLoaded;
+import org.terasology.entitySystem.event.ReceiveEvent;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
 import org.terasology.registry.In;
 
@@ -27,14 +30,13 @@ import org.terasology.registry.In;
 public class OperatingSytemModule extends BaseComponentSystem {
 
     @In
-    ComputerServerSystem computerServerSystem;
-
+    private ComputerServerSystem computerServerSystem;
     @In
-    GUIModule guiModule;
+    private GUIModule guiModule;
     @In
-    InventoryModule inventoryModule;
+    private InventoryModule inventoryModule;
     @In
-    TerminalModule terminalModule;
+    private TerminalModule terminalModule;
 
     @Override
     public void initialise() {
@@ -46,15 +48,39 @@ public class OperatingSytemModule extends BaseComponentSystem {
         computerServerSystem.loadModule(terminalModule);
     }
 
-    @ComputerMethod(name = "dump", description = "")
-    public void dump(ComputerContext computer){
-
-    }
-
     @ComputerCommand(name = "run", description = "")
     public void run(ComputerContext computer, String[] args){
 
     }
+    @ComputerCommand(name = "cd", description = "")
+    public void changeDirectory(ComputerContext computer, String[] args){
+
+    }
+
+    @ComputerCommand(name = "ls", description = "")
+    public void listDirectory(ComputerContext computer, String[] args){
+
+    }
+
+    @ComputerMethod(name = "save", description = "")
+    public void save(ComputerContext computer,String path,String content, boolean overwrite){
+
+    }
+
+    @ComputerMethod(name = "read", description = "")
+    public String read(ComputerContext computer,String path){
+        return "";
+    }
+
+
+    @ReceiveEvent
+    public void onComputerLoaded(OnComputerLoaded computerLoaded){
+        ComputerContext context = computerLoaded.getContext();
+        if(!context.getEntityRef().hasComponent(FilesystemComponent.class))
+            context.getEntityRef().addComponent(new FilesystemComponent());
+
+    }
+
 
 //    public boolean command(ComputerContext computer,String op, String[] args, boolean printCommand) {
 //        ComputerCommand.ComputerCommandInfo info = commandInfoMap.get(op);

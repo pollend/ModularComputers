@@ -19,6 +19,7 @@ import com.google.common.collect.Sets;
 import org.terasology.computer.server.event.OnDisplayActivated;
 import org.terasology.computer.server.event.OnDisplayDeactivated;
 import org.terasology.entitySystem.entity.EntityRef;
+import org.terasology.entitySystem.systems.BaseComponentSystem;
 
 import java.util.Set;
 
@@ -42,5 +43,9 @@ public class ComputerContext {
 
     public EntityRef getViewer() {
         return viewer;
+    }
+
+    public <T extends BaseComponentSystem> T getComputerModule(Class<T> classz){
+        return this.computerServerSystem.getComputerModule(classz);
     }
 }

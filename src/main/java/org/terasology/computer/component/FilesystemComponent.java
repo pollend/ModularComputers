@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server;
+package org.terasology.computer.component;
 
+import com.google.common.collect.Lists;
+import org.terasology.entitySystem.Component;
+import org.terasology.entitySystem.entity.EntityRef;
+import org.terasology.reflection.MappedContainer;
 
-import org.terasology.entitySystem.systems.BaseComponentSystem;
+import java.util.List;
+import java.util.Map;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+public class FilesystemComponent implements Component {
+    String path = "";
+    public List<Mount> mounts = Lists.newArrayList();
 
-public @interface ComputerCommand {
-    String name();
-    String description();
-
+    @MappedContainer
+    public static class Mount{
+        public EntityRef toMount;
+        public String mountPath;
+    }
 }

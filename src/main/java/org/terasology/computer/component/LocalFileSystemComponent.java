@@ -15,16 +15,7 @@
  */
 package org.terasology.computer.component;
 
-import org.terasology.reflection.MappedContainer;
-
-import java.util.Map;
-
-public class FileSystemComponent {
-    public FolderNode root;
-
-    @MappedContainer
-    public static class FolderNode{
-        public Map<String,FolderNode> folders;
-        public Map<String,String> files;
-    }
+public class LocalFileSystemComponent {
+    public int maxSizeOfFileSystem;
+    public FolderNode folderNode;
 }
