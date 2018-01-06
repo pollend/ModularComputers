@@ -15,17 +15,12 @@
  */
 package org.terasology.computer.client.ui;
 
-import org.codehaus.plexus.util.StringUtils;
-import org.terasology.computer.client.ui.gui.PlayerCommandConsoleGui;
+import org.lwjgl.input.Keyboard;
+import org.terasology.computer.utility.ComputerStringUtility;
 import org.terasology.entitySystem.entity.EntityRef;
-import org.terasology.input.Keyboard;
-import org.terasology.input.device.KeyboardDevice;
-import org.terasology.logic.characters.CharacterComponent;
 import org.terasology.logic.clipboard.ClipboardManager;
-import org.terasology.logic.common.DisplayNameComponent;
 import org.terasology.math.geom.Rect2i;
 import org.terasology.math.geom.Vector2i;
-import org.terasology.network.ClientComponent;
 import org.terasology.rendering.assets.font.Font;
 import org.terasology.rendering.nui.Canvas;
 import org.terasology.rendering.nui.Color;
@@ -36,7 +31,9 @@ import org.terasology.rendering.nui.VerticalAlign;
 import org.terasology.rendering.nui.events.NUIKeyEvent;
 import org.terasology.utilities.Assets;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ComputerTerminalWidget extends CoreWidget {
     public static final int CONSOLE_WIDTH = 87;
@@ -50,6 +47,8 @@ public class ComputerTerminalWidget extends CoreWidget {
     private static final int PADDING_HOR = 5;
     private static final int PADDING_VER = 5;
 
+    private static final int BLINK_LENGTH = 20;
+
     @LayoutConfig
     private String monospaceFont;
 
@@ -61,64 +60,19 @@ public class ComputerTerminalWidget extends CoreWidget {
 
     private Font monospacedFont;
 
-    private TerminalMode mode = TerminalMode.PLAYER_CONSOLE;
-    private boolean editingProgram;
+    private char[][] chars = new char[CONSOLE_HEIGHT][CONSOLE_WIDTH];
+    private int blinkDrawTick;
 
+    private int cursorPositionInPlayerCommand = 0;
+    private String command = "";
 
-
-    private Runnable closeRunnable;
-    private EntityRef clientEntity;
-    private int computerId;
-
-    private PlayerCommandConsoleGui playerCommandConsoleGui;
-
-    public void setup(ClipboardManager clipboardManager,
-                      Runnable closeRunnable, EntityRef clientEntity, int computerId) {
-        editingProgram = false;
-
-        this.closeRunnable = closeRunnable;
-        this.clientEntity = clientEntity;
-        this.computerId = computerId;
-
-        playerCommandConsoleGui = new PlayerCommandConsoleGui(this);
-        playerCommandConsoleGui.appendToConsole("AutomationOS v. 0.0");
-        String userName = clientEntity.getComponent(CharacterComponent.class).controller.getComponent(ClientComponent.class).clientInfo.getComponent(DisplayNameComponent.class).name;
-        playerCommandConsoleGui.appendToConsole("You're logged in as " + userName + ", use \"exit\" command to exit the console, use \"help\" to list commands.");
-       // programEditingConsoleGui = new ProgramEditingConsoleGui(this, computerLanguageContextInitializer, clipboardManager);
-
-        //this.clientEntity.send(new ConsoleListeningRegistrationEvent(this.computerId, true));
-    }
-
-    public void saveProgram(String programName, String code) {
-       // clientEntity.send(new SaveProgramEvent(computerId, programName, code));
-    }
-
-    public int getComputerId() {
-        return computerId;
-    }
-
-    public void setMode(TerminalMode mode) {
-        this.mode = mode;
-    }
-
-    public void onClosed() {
-        //clientEntity.send(new ConsoleListeningRegistrationEvent(computerId, false));
-    }
-
-    public void appendToPlayerConsole(String text) {
-        playerCommandConsoleGui.appendToConsole(text);
-    }
-
-    public void displayProgramList(Collection<String> programs) {
-        if (!programs.isEmpty()) {
-            String programList = StringUtils.join(programs.iterator(), " ");
-            playerCommandConsoleGui.appendToConsole(programList);
-        }
-        playerCommandConsoleGui.setReadOnly(false);
-    }
 
     @Override
     public void onDraw(Canvas canvas) {
+        if (monospacedFont == null) {
+            monospacedFont = Assets.getFont(monospaceFont).get();
+        }
+
         Rect2i region = canvas.getRegion();
 
         int screenWidth = region.width();
@@ -128,24 +82,49 @@ public class ComputerTerminalWidget extends CoreWidget {
         canvas.drawFilledRectangle(Rect2i.createFromMinAndSize(0, 0, screenWidth, screenHeight), BACKGROUND_COLOR);
 
         // Draw white rectangle around the screen
-        drawHorizontalLine(canvas, 0, 0, screenWidth, FRAME_COLOR);
-        drawHorizontalLine(canvas, 0, screenHeight, screenWidth, FRAME_COLOR);
-        drawVerticalLine(canvas, 0, 0, screenHeight, FRAME_COLOR);
-        drawVerticalLine(canvas, screenWidth, 0, screenHeight, FRAME_COLOR);
+        canvas.drawLine(0, 0, 0, screenHeight, FRAME_COLOR);
+        canvas.drawLine(screenWidth, 0, screenWidth, screenHeight, FRAME_COLOR);
+        canvas.drawLine(0, 0, screenWidth, 0, FRAME_COLOR);
+        canvas.drawLine(0, screenHeight, screenWidth, screenHeight, FRAME_COLOR);
 
-
-        if (mode == TerminalMode.PLAYER_CONSOLE) {
-            drawPlayerConsole(canvas, isFocused());
-        } else if (mode == TerminalMode.COMPUTER_CONSOLE) {
-            drawComputerConsole(canvas);
+        for (int y = 0; y < CONSOLE_HEIGHT; y++) {
+            StringBuilder result = new StringBuilder();
+            for (int x = 0; x < CONSOLE_WIDTH; x++) {
+                if (chars[y][x] == 0) {
+                    result.append((char) 32);
+                } else {
+                    result.append(chars[y][x]);
+                }
+            }
+            String text = result.toString();
+            canvas.drawTextRaw(text, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + (y - 1) * fontHeight, characterWidth * text.length(), fontHeight), HorizontalAlign.CENTER, VerticalAlign.TOP);
         }
-    }
 
-    private Font getFont(Canvas canvas) {
-        if (monospacedFont == null) {
-            monospacedFont = Assets.getFont(monospaceFont).get();
+        int currentCommandDisplayStartIndex = 0;
+        int lineLength = command.length() + 1;
+        if (lineLength <= CONSOLE_WIDTH)
+            currentCommandDisplayStartIndex = 0;
+        else {
+            int cursorPositionInCommand = 1 + cursorPositionInPlayerCommand;
+            if (currentCommandDisplayStartIndex + CONSOLE_WIDTH > lineLength)
+                currentCommandDisplayStartIndex = lineLength - CONSOLE_WIDTH;
+            else if (cursorPositionInCommand > CONSOLE_WIDTH + currentCommandDisplayStartIndex)
+                currentCommandDisplayStartIndex = cursorPositionInCommand - CONSOLE_WIDTH;
+            else if (cursorPositionInCommand - 1 < currentCommandDisplayStartIndex)
+                currentCommandDisplayStartIndex = cursorPositionInCommand - 1;
         }
-        return monospacedFont;
+
+        String wholeCommandLine = ">" + command;
+        String commandLine = wholeCommandLine.substring(currentCommandDisplayStartIndex, Math.min(currentCommandDisplayStartIndex + CONSOLE_WIDTH, wholeCommandLine.length()));
+        int cursorPositionInDisplayedCommandLine = 1 + cursorPositionInPlayerCommand - currentCommandDisplayStartIndex;
+
+        final int lastLineY = PADDING_VER + fontHeight * (CONSOLE_HEIGHT - 1);
+        canvas.drawTextRaw(commandLine, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + lastLineY, characterWidth * commandLine.length(), fontHeight), HorizontalAlign.CENTER, VerticalAlign.TOP);
+
+        blinkDrawTick = ((++blinkDrawTick) % BLINK_LENGTH);
+        if (blinkDrawTick * 2 > BLINK_LENGTH)
+            canvas.drawLine(PADDING_HOR + cursorPositionInDisplayedCommandLine * characterWidth, PADDING_VER + lastLineY, PADDING_HOR + cursorPositionInDisplayedCommandLine * characterWidth, PADDING_VER + lastLineY + fontHeight, COMPUTER_CONSOLE_TEXT_COLOR);
+
     }
 
     @Override
@@ -155,225 +134,49 @@ public class ComputerTerminalWidget extends CoreWidget {
         return new Vector2i(width, height);
     }
 
-    protected void requestSave(String programName, String programText) {
-        //clientEntity.send(new SaveProgramEvent(computerId, programName, programText));
-    }
 
-    private void drawPlayerConsole(Canvas canvas, boolean focused) {
-        if (editingProgram) {
-         //   programEditingConsoleGui.drawEditProgramConsole(canvas, focused, PADDING_HOR, PADDING_VER, characterWidth, fontHeight);
-        } else {
-            playerCommandConsoleGui.drawPlayerCommandConsole(canvas, focused, PADDING_HOR, PADDING_VER, characterWidth, fontHeight);
-        }
-    }
-
-    private void drawComputerConsole(Canvas canvas) {
-        /*final String[] consoleLines = computerConsole.getLines();
-        for (int i = 0; i < consoleLines.length; i++) {
-            drawMonospacedText(canvas, consoleLines[i], PADDING_HOR, PADDING_VER + i * fontHeight, COMPUTER_CONSOLE_TEXT_COLOR);
-        }*/
-    }
-
-    public void drawVerticalLine(Canvas canvas, int x, int y1, int y2, Color color) {
-        canvas.drawLine(x, y1, x, y2, color);
-    }
-
-    public void drawHorizontalLine(Canvas canvas, int x1, int y, int x2, Color color) {
-        canvas.drawLine(x1, y, x2, y, color);
-    }
-
-    public interface Coloring {
-        public Color getColor(int column);
-    }
-
-    protected void drawMonospacedText(Canvas canvas, String text, int x, int y, Coloring coloring) {
-        char[] chars = text.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            Color color = coloring.getColor(i);
-            renderCharAt(canvas, chars[i], x + i * characterWidth, y, color);
-        }
-    }
-
-    protected void drawMonospacedText(Canvas canvas, String text, int x, int y, Color color) {
-        char[] chars = text.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            renderCharAt(canvas, chars[i], x + i * characterWidth, y, color);
-        }
-    }
-
-    private void renderCharAt(Canvas canvas, char ch, int x, int y, Color color) {
-        canvas.drawTextRaw(String.valueOf(ch), getFont(canvas), color, Rect2i.createFromMinAndSize(x, y, characterWidth, fontHeight), HorizontalAlign.CENTER, VerticalAlign.TOP);
-    }
-
-    @Override
-    public boolean onKeyEvent(NUIKeyEvent event) {
-        if (isFocused()) {
-            int keyboardCharId = event.getKey().getId();
-            if (event.isDown()) {
-                char character = event.getKeyCharacter();
-                if (mode == TerminalMode.PLAYER_CONSOLE) {
-                    if (editingProgram) {
-                        KeyboardDevice keyboard = event.getKeyboard();
-//                        programEditingConsoleGui.keyTypedInEditingProgram(character, keyboardCharId,
-//                                keyboard.isKeyDown(Keyboard.KeyId.LEFT_CTRL) || keyboard.isKeyDown(Keyboard.KeyId.RIGHT_CTRL));
-                    } else {
-                        playerCommandConsoleGui.keyTypedInPlayerConsole(character, keyboardCharId);
-                    }
-                }
-            }
-            if (keyboardCharId != Keyboard.KeyId.ESCAPE) {
-                return true;
+    public void appendToTerminal(String toAppend) {
+        final String[] lines = toAppend.split("\n");
+        List<String> realLinesToAppend = new ArrayList<>();
+        for (String line : lines) {
+            final String printableLine = ComputerStringUtility.stripInvalidCharacters(line);
+            for (int i = 0; i < printableLine.length(); i += CONSOLE_WIDTH) {
+                realLinesToAppend.add(printableLine.substring(i, Math.min(i + CONSOLE_WIDTH, printableLine.length())));
             }
         }
-        return false;
-    }
+        // Strip all the lines that are overflowing the screen
+        if (realLinesToAppend.size() > CONSOLE_HEIGHT) {
+            realLinesToAppend = realLinesToAppend.subList(realLinesToAppend.size() - CONSOLE_HEIGHT, realLinesToAppend.size());
+        }
 
-    protected void exitProgramming() {
-        editingProgram = false;
-    }
+        String[] realLines = realLinesToAppend.toArray(new String[realLinesToAppend.size()]);
 
-    protected void executeCommand(String command) {
-        String[] commandParts = command.split(" ");
-        if (commandParts.length > 0) {
-            if (commandParts[0].equals("exit")) {
-                closeRunnable.run();
-            } else if (commandParts[0].equals("help")) {
-                printHelp();
-            } else if (commandParts[0].equals("edit")) {
-                if (commandParts.length != 2) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("edit [programName] - edits or creates a new program with the specified name");
-                } else if (!isValidProgramName(commandParts[1])) {
-                    playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
-                } else {
-                    String programName = commandParts[1];
+        // Move all existing lines up, unless we need to replace all lines
+        if (realLines.length < CONSOLE_HEIGHT) {
+            System.arraycopy(chars, realLines.length, chars, 0, CONSOLE_HEIGHT - realLines.length);
+        }
 
-                    playerCommandConsoleGui.appendToConsole("Downloading program...");
-
-                    playerCommandConsoleGui.setReadOnly(true);
-                   // clientEntity.send(new GetProgramTextEvent(computerId, programName));
-                }
-            } else if (commandParts[0].equals("execute")) {
-                if (commandParts.length < 2) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("execute [programName] [argument] ... [argument]- executes specified program with specified arguments (if any)");
-                } else if (!isValidProgramName(commandParts[1])) {
-                    playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
-                } else {
-                    String[] arguments = new String[commandParts.length - 2];
-                    for (int i = 0; i < commandParts.length - 2; i++) {
-                        arguments[i] = commandParts[i + 2];
-                    }
-                    //clientEntity.send(new ExecuteProgramEvent(computerId, commandParts[1], arguments));
-                }
-            } else if (commandParts[0].equals("list")) {
-                if (commandParts.length > 1) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("list - lists all programs on that computer");
-                } else {
-                    playerCommandConsoleGui.appendToConsole("Retrieving list of programs...");
-
-                    playerCommandConsoleGui.setReadOnly(true);
-                    //clientEntity.send(new ListProgramsEvent(computerId));
-                }
-            } else if (commandParts[0].equals("delete")) {
-                if (commandParts.length != 2) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("delete [programName] - deletes specified program");
-                } else if (!isValidProgramName(commandParts[1])) {
-                    playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
-                } else {
-                   // clientEntity.send(new DeleteProgramEvent(computerId, commandParts[1]));
-                }
-            } else if (commandParts[0].equals("copy")) {
-                if (commandParts.length != 3) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("copy [programNameSource] [programNameDestination] - copies a program from source to destination");
-                } else if (!isValidProgramName(commandParts[1]) || !isValidProgramName(commandParts[2])) {
-                    playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
-                } else {
-                   // clientEntity.send(new CopyProgramEvent(computerId, commandParts[1], commandParts[2]));
-                }
-            } else if (commandParts[0].equals("rename")) {
-                if (commandParts.length != 3) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("rename [programNameOld] [programNameNew] - renames a program from old to new name");
-                } else if (!isValidProgramName(commandParts[1]) || !isValidProgramName(commandParts[2])) {
-                    playerCommandConsoleGui.appendToConsole("Invalid program name - only letters and digits allowed and a maximum length of 10");
-                } else {
-                    //clientEntity.send(new RenameProgramEvent(computerId, commandParts[1], commandParts[2]));
-                }
-            } else if (commandParts[0].equals("stop")) {
-                if (commandParts.length > 1) {
-                    playerCommandConsoleGui.appendToConsole("Usage:");
-                    playerCommandConsoleGui.appendToConsole("stop - stops currently running program");
-                } else {
-                   // clientEntity.send(new StopProgramEvent(computerId));
-                }
-            } else {
-                if (commandParts[0].length() > 0) {
-                    playerCommandConsoleGui.appendToConsole("Unknown command - " + commandParts[0]);
-                }
-            }
+        // Replace the lines (at the end) with the contents of realLines
+        int startIndex = CONSOLE_HEIGHT - realLines.length;
+        for (int i = startIndex; i < CONSOLE_HEIGHT; i++) {
+            setLine(i, realLines[i - startIndex]);
         }
     }
 
-    private boolean isValidProgramName(String programName) {
-        if (programName.length() > 10 || programName.length() == 0) {
-            return false;
-        }
-        for (char c : programName.toCharArray()) {
-            if (!Character.isDigit(c) && !Character.isLetter(c)) {
-                return false;
-            }
-        }
-        return true;
+    private void setLine(int lineIndex, String text) {
+        chars[lineIndex] = new char[CONSOLE_WIDTH];
+        System.arraycopy(text.toCharArray(), 0, chars[lineIndex], 0, text.length());
     }
 
-    private void printHelp() {
-        playerCommandConsoleGui.appendToConsole("help - prints this text");
-        playerCommandConsoleGui.appendToConsole("copy [programNameSource] [programNameDestination] - copies a program from source to destination");
-        playerCommandConsoleGui.appendToConsole("delete [programName] - deletes a program");
-        playerCommandConsoleGui.appendToConsole("edit [programName] - edits a program in an editor");
-        playerCommandConsoleGui.appendToConsole("execute [programName] - executes a program");
-        playerCommandConsoleGui.appendToConsole("list - lists all programs on that computer");
-        playerCommandConsoleGui.appendToConsole("rename [programNameOld] [programNameNew] - renames a program from old to new name");
-        playerCommandConsoleGui.appendToConsole("stop - stops currently running program");
-        playerCommandConsoleGui.appendToConsole("exit - exits this console");
+    public void setCommand(String command) {
+        this.command = command;
     }
 
-    public void clearComputerConsole() {
-      //  computerConsole.clearConsole();
+    public void setCursorIndex(int index) {
+        this.cursorPositionInPlayerCommand = index;
     }
 
-    public void setComputerConsoleState(String[] lines) {
-      //  computerConsole.setConsoleState(lines);
-    }
 
-    public void setComputerConsoleCharacters(int x, int y, String text) {
-        //computerConsole.setCharacters(x, y, text);
-    }
 
-    public void appendComputerConsoleLines(String[] lines) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < lines.length; i++) {
-            if (i > 0) {
-                result.append('\n');
-            }
-            result.append(lines[i]);
-        }
-
-        //computerConsole.appendString(result.toString());
-    }
-
-    public void setProgramText(String programName, String programText) {
-        playerCommandConsoleGui.setReadOnly(false);
-        editingProgram = true;
-      //  programEditingConsoleGui.setProgramText(programName, programText);
-    }
-
-    public enum TerminalMode {
-        PLAYER_CONSOLE, COMPUTER_CONSOLE
-    }
 }
 

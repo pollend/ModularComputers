@@ -15,127 +15,31 @@
  */
 package org.terasology.computer.client.ui;
 
-import org.terasology.entitySystem.entity.EntityRef;
-import org.terasology.logic.clipboard.ClipboardManager;
+import org.lwjgl.input.Keyboard;
 import org.terasology.registry.CoreRegistry;
 import org.terasology.rendering.nui.CoreScreenLayer;
 import org.terasology.rendering.nui.NUIManager;
-import org.terasology.rendering.nui.UIWidget;
-import org.terasology.rendering.nui.layouts.CardLayout;
-import org.terasology.rendering.nui.widgets.ActivateEventListener;
-import org.terasology.rendering.nui.widgets.UIButton;
-import org.terasology.rendering.nui.widgets.browser.data.basic.HTMLLikeParser;
-import org.terasology.rendering.nui.widgets.browser.ui.BrowserHyperlinkListener;
-import org.terasology.rendering.nui.widgets.browser.ui.BrowserWidget;
+import org.terasology.rendering.nui.events.NUIKeyEvent;
 
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Set;
+import java.util.List;
 
 public class ComputerTerminalWindow extends CoreScreenLayer {
+    public static final int CONSOLE_WIDTH = 87;
+    public static final int CONSOLE_HEIGHT = 35;
+
     private ComputerTerminalWidget computerTerminalWidget;
 
-    private Deque<String> browserHistory = new LinkedList<>();
-    private Deque<String> browserFuture = new LinkedList<>();
-    private UIButton backButton;
-    private UIButton forwardButton;
+    private List<String> commandHistory = new LinkedList<>();
 
-    private BrowserWidget browser;
-    private CardLayout tabs;
-
-    private UIButton playerConsoleTabButton;
-    private UIButton computerConsoleTabButton;
-    private UIButton documentationTabButton;
-
-    private Set<String> expandedPageIds = new HashSet<>();
+    private StringBuilder currentCommand = new StringBuilder();
+    private int cursorPositionInPlayerCommand = 0;
+    private int historyIndex = 0;
 
     @Override
     public void initialise() {
         computerTerminalWidget = find("computerTerminal", ComputerTerminalWidget.class);
-
-        playerConsoleTabButton = find("playerConsole", UIButton.class);
-        computerConsoleTabButton = find("computerConsole", UIButton.class);
-        documentationTabButton = find("documentation", UIButton.class);
-     //   tocList = find("tableOfContents", UIList.class);
-
-        tabs = find("tabs", CardLayout.class);
-        browser = find("browser", BrowserWidget.class);
-        browser.addBrowserHyperlinkListener(
-                new BrowserHyperlinkListener() {
-                    @Override
-                    public void hyperlinkClicked(String hyperlink) {
-                        if (hyperlink.startsWith("navigate:")) {
-                         //   navigateTo(hyperlink.substring(9), true);
-                        } else if (hyperlink.startsWith("saveAs:")) {
-                            String[] split = hyperlink.substring(7).split(":", 2);
-                            saveAs(HTMLLikeParser.unencodeHTMLLike(split[0]), HTMLLikeParser.unencodeHTMLLike(split[1]));
-                        }
-                    }
-                });
-
-        playerConsoleTabButton.subscribe(
-                new ActivateEventListener() {
-                    @Override
-                    public void onActivated(UIWidget widget) {
-                        setTabButtonsState(false, true, true);
-                        tabs.setDisplayedCard("computerTerminal");
-                        computerTerminalWidget.setMode(ComputerTerminalWidget.TerminalMode.PLAYER_CONSOLE);
-                        requestFocusToTerminal();
-                    }
-                });
-        computerConsoleTabButton.subscribe(
-                new ActivateEventListener() {
-                    @Override
-                    public void onActivated(UIWidget widget) {
-                        setTabButtonsState(true, false, true);
-                        tabs.setDisplayedCard("computerTerminal");
-                        computerTerminalWidget.setMode(ComputerTerminalWidget.TerminalMode.COMPUTER_CONSOLE);
-                        requestFocusToTerminal();
-                    }
-                });
-        documentationTabButton.subscribe(
-                new ActivateEventListener() {
-                    @Override
-                    public void onActivated(UIWidget widget) {
-                        setTabButtonsState(true, true, false);
-                        tabs.setDisplayedCard("browserTab");
-                    }
-                });
-
-        playerConsoleTabButton.setEnabled(false);
-
-        UIButton homeButton = find("homeButton", UIButton.class);
-        backButton = find("backButton", UIButton.class);
-        forwardButton = find("forwardButton", UIButton.class);
-
-//        homeButton.subscribe(
-//                new ActivateEventListener() {
-//                    @Override
-//                    public void onActivated(UIWidget widget) {
-//                        navigateTo("introduction", true);
-//                    }
-//                }
-//        );
-//        backButton.subscribe(
-//                new ActivateEventListener() {
-//                    @Override
-//                    public void onActivated(UIWidget widget) {
-//                        String currentPage = browserHistory.removeLast();
-//                        browserFuture.addFirst(currentPage);
-//                        String previousPage = browserHistory.peekLast();
-//                        navigateTo(previousPage, false);
-//                    }
-//                });
-//        forwardButton.subscribe(
-//                new ActivateEventListener() {
-//                    @Override
-//                    public void onActivated(UIWidget widget) {
-//                        String nextPage = browserFuture.removeFirst();
-//                        browserHistory.add(nextPage);
-//                        navigateTo(nextPage, false);
-//                    }
-//                });
+        requestFocusToTerminal();
     }
 
     @Override
@@ -145,44 +49,78 @@ public class ComputerTerminalWindow extends CoreScreenLayer {
         }
     }
 
-    private void setTabButtonsState(boolean playerConsole, boolean computerConsole, boolean documentation) {
-        playerConsoleTabButton.setEnabled(playerConsole);
-        computerConsoleTabButton.setEnabled(computerConsole);
-        documentationTabButton.setEnabled(documentation);
+    @Override
+    public boolean onKeyEvent(NUIKeyEvent event) {
+        int keyboardCharId = event.getKey().getId();
+        if (event.isDown()) {
+            char character = event.getKeyCharacter();
+
+            if (character >= 32 && character < 127) {
+                currentCommand.insert(cursorPositionInPlayerCommand, character);
+                cursorPositionInPlayerCommand++;
+            } else if (keyboardCharId == Keyboard.KEY_BACK && cursorPositionInPlayerCommand > 0) {
+                currentCommand.delete(cursorPositionInPlayerCommand - 1, cursorPositionInPlayerCommand);
+                cursorPositionInPlayerCommand--;
+            } else if (keyboardCharId == Keyboard.KEY_DELETE && cursorPositionInPlayerCommand < currentCommand.length()) {
+                currentCommand.delete(cursorPositionInPlayerCommand, cursorPositionInPlayerCommand + 1);
+            } else if (keyboardCharId == Keyboard.KEY_LEFT && cursorPositionInPlayerCommand > 0) {
+                cursorPositionInPlayerCommand--;
+            } else if (keyboardCharId == Keyboard.KEY_RIGHT && cursorPositionInPlayerCommand < currentCommand.length()) {
+                cursorPositionInPlayerCommand++;
+            } else if (keyboardCharId == Keyboard.KEY_HOME) {
+                cursorPositionInPlayerCommand = 0;
+            } else if (keyboardCharId == Keyboard.KEY_END) {
+                cursorPositionInPlayerCommand = currentCommand.length();
+            } else if (keyboardCharId == Keyboard.KEY_RETURN) {
+                String command = currentCommand.toString().trim();
+                if (command.length() > 0) {
+                    //add a command and remove if the terminal overflows
+                    commandHistory.add(0, command);
+                    historyIndex = 0;
+                    if (commandHistory.size() > 20) {
+                        commandHistory.remove(20);
+                    }
+                    this.appendToTerminal(">" + command);
+
+                    //send to server
+//                        computerTerminalWidget.executeCommand(command);
+                    currentCommand = new StringBuilder();
+                    cursorPositionInPlayerCommand = 0;
+                }
+            } else if (keyboardCharId == Keyboard.KEY_UP) {
+                if (historyIndex < commandHistory.size()) {
+                    currentCommand = new StringBuilder();
+                    currentCommand.append(commandHistory.get(historyIndex));
+                    cursorPositionInPlayerCommand = currentCommand.length();
+                    historyIndex++;
+                }
+            } else if (keyboardCharId == Keyboard.KEY_DOWN) {
+                if (historyIndex > 1) {
+                    currentCommand = new StringBuilder();
+                    currentCommand.append(commandHistory.get(historyIndex - 2));
+                    cursorPositionInPlayerCommand = currentCommand.length();
+                    historyIndex--;
+                } else if (historyIndex == 1) {
+                    currentCommand = new StringBuilder();
+                    cursorPositionInPlayerCommand = 0;
+                    historyIndex = 0;
+                }
+            }
+
+        }
+        computerTerminalWidget.setCommand(currentCommand.toString());
+        computerTerminalWidget.setCursorIndex(cursorPositionInPlayerCommand);
+
+        return super.onKeyEvent(event);
     }
 
-
-
-    private void saveAs(String programName, String code) {
-        computerTerminalWidget.saveProgram(programName, code);
-    }
-
-    private void updateHistoryButtons() {
-        backButton.setEnabled(browserHistory.size() > 1);
-        forwardButton.setEnabled(browserFuture.size() > 0);
-    }
 
     private void requestFocusToTerminal() {
         CoreRegistry.get(NUIManager.class).setFocus(computerTerminalWidget);
     }
 
-    public void initializeTerminal(ClipboardManager clipboardManager, EntityRef client, int computerId) {
 
-        computerTerminalWidget.setup(clipboardManager,
-                new Runnable() {
-                    public void run() {
-                        CoreRegistry.get(NUIManager.class).closeScreen(ComputerTerminalWindow.this);
-                    }
-                }, client, computerId);
-        requestFocusToTerminal();
-    }
-
-    public ComputerTerminalWidget getComputerTerminalWidget() {
-        return computerTerminalWidget;
-    }
-
-    @Override
-    public void onClosed() {
-        computerTerminalWidget.onClosed();
+    public void appendToTerminal(String toAppend) {
+        this.computerTerminalWidget.appendToTerminal(toAppend);
     }
 }
