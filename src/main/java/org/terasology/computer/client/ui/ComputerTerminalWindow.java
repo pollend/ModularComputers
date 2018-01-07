@@ -25,8 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class ComputerTerminalWindow extends CoreScreenLayer {
-    public static final int CONSOLE_WIDTH = 87;
-    public static final int CONSOLE_HEIGHT = 35;
+
 
     private ComputerTerminalWidget computerTerminalWidget;
 

@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server.lua;
+package org.terasology.computer.component.device;
 
-import org.luaj.vm2.LuaThread;
-import org.terasology.computer.server.machine.task.BaseTask;
+import org.terasology.entitySystem.Component;
+import org.terasology.entitySystem.entity.EntityRef;
 
-public class LuaTask extends BaseTask{
-    private String name;
-    private LuaThread thread;
+public class DisplayComponent implements Device, Component {
+    public EntityRef displayEntity;
+    public String deviceKey;
 
-    public LuaTask(String name, LuaThread luaThread){
-        this.name = name;
-        this.thread = luaThread;
+    @Override
+    public String getDeviceKey() {
+        return deviceKey;
+    }
+
+    @Override
+    public void setDeviceKey(String key) {
+        this.deviceKey = key;
     }
 
     @Override
     public String getName() {
-        return null;
+        return "Monitor";
     }
 }

@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server.lua;
+package org.terasology.computer.server.machine.task;
 
-import org.luaj.vm2.LuaThread;
-import org.terasology.computer.server.machine.task.BaseTask;
+import org.terasology.computer.server.ComputerContext;
+import org.terasology.input.Keyboard;
 
-public class LuaTask extends BaseTask{
-    private String name;
-    private LuaThread thread;
-
-    public LuaTask(String name, LuaThread luaThread){
-        this.name = name;
-        this.thread = luaThread;
-    }
-
-    @Override
-    public String getName() {
-        return null;
-    }
+public interface Task {
+    String getName();
 }

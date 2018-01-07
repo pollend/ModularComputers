@@ -13,8 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server.machine;
+package org.terasology.computer.server.machine.task;
 
-public interface Task {
-    String getName();
+import org.terasology.computer.server.ComputerContext;
+import org.terasology.input.Keyboard;
+
+public class TerminalTask extends BaseTask{
+    public TerminalTask(ComputerContext context) {
+        super(context);
+    }
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
 }

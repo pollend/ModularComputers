@@ -11,10 +11,7 @@
                 "contents": [
                     {
                         "id": "computerTerminal",
-                        "type": "ModularComputers:ComputerTerminalWidget",
-                        "monospaceFont": "ModularComputers:november",
-                        "characterWidth": 8,
-                        "fontHeight": 16
+                        "type": "ModularComputers:ComputerTerminalWidget"
                     }
                 ],
                 "layoutInfo": {

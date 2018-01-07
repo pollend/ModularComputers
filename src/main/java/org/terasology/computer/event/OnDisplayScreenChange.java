@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server.lua;
+package org.terasology.computer.event;
 
-import org.luaj.vm2.LuaThread;
-import org.terasology.computer.server.machine.task.BaseTask;
+import org.terasology.entitySystem.event.Event;
 
-public class LuaTask extends BaseTask{
-    private String name;
-    private LuaThread thread;
-
-    public LuaTask(String name, LuaThread luaThread){
-        this.name = name;
-        this.thread = luaThread;
+public class OnDisplayScreenChange implements Event {
+    private String screen;
+    public OnDisplayScreenChange(String screen){
+        this.screen = screen;
     }
 
-    @Override
-    public String getName() {
-        return null;
+    public String getScreen() {
+        return screen;
     }
 }

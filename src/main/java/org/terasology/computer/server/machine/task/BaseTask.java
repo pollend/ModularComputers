@@ -13,9 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.terasology.computer.server.machine;
+package org.terasology.computer.server.machine.task;
+
+import org.terasology.computer.server.ComputerContext;
 
 public abstract class BaseTask implements Task{
+    protected ComputerContext context;
+    public BaseTask(ComputerContext context){
+        this.context = context;
+    }
+
     @Override
     public abstract String getName();
 }

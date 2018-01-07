@@ -15,6 +15,7 @@
  */
 package org.terasology.computer.server;
 
+import org.terasology.computer.event.OnDisplayScreenChange;
 import org.terasology.entitySystem.entity.EntityRef;
 import org.terasology.entitySystem.event.Event;
 import org.terasology.entitySystem.systems.BaseComponentSystem;
@@ -23,6 +24,7 @@ public class ComputerContext {
     private EntityRef entityRef;
     private ComputerServerSystem computerServerSystem;
     private EntityRef viewer = null;
+    private String activeScreen = "";
 
     public ComputerContext(EntityRef entityRef,ComputerServerSystem computerServerSystem) {
         this.entityRef = entityRef;
@@ -45,4 +47,12 @@ public class ComputerContext {
         return this.computerServerSystem.getComputerModule(classz);
     }
 
+    public void setActiveScreen(String activeScreen) {
+        entityRef.send(new OnDisplayScreenChange(activeScreen));
+        this.activeScreen = activeScreen;
+    }
+
+    public String getActiveScreen() {
+        return activeScreen;
+    }
 }

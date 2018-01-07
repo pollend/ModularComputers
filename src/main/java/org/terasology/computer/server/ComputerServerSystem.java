@@ -43,8 +43,6 @@ public class ComputerServerSystem extends BaseComponentSystem implements UpdateS
 
     private Map<EntityRef, ComputerContext> contexts = Maps.newHashMap();
     private Map<Class<? extends BaseComponentSystem>, ComputerModuleInfo> computerModuleInfoMap = Maps.newHashMap();
-    ;
-
     private Map<Class<? extends Machine>, Machine> computerMachines = Maps.newHashMap();
 
 

@@ -15,50 +15,20 @@
  */
 package org.terasology.computer.client.ui;
 
-import org.lwjgl.input.Keyboard;
 import org.terasology.computer.utility.ComputerStringUtility;
-import org.terasology.entitySystem.entity.EntityRef;
-import org.terasology.logic.clipboard.ClipboardManager;
 import org.terasology.math.geom.Rect2i;
-import org.terasology.math.geom.Vector2i;
-import org.terasology.rendering.assets.font.Font;
 import org.terasology.rendering.nui.Canvas;
 import org.terasology.rendering.nui.Color;
-import org.terasology.rendering.nui.CoreWidget;
 import org.terasology.rendering.nui.HorizontalAlign;
-import org.terasology.rendering.nui.LayoutConfig;
 import org.terasology.rendering.nui.VerticalAlign;
-import org.terasology.rendering.nui.events.NUIKeyEvent;
-import org.terasology.utilities.Assets;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-public class ComputerTerminalWidget extends CoreWidget {
-    public static final int CONSOLE_WIDTH = 87;
-    public static final int CONSOLE_HEIGHT = 35;
-
-    public static final Color BACKGROUND_COLOR = new Color(0x111111ff);
-    public static final Color FRAME_COLOR = new Color(0xffffffff);
+public class ComputerTerminalWidget extends BaseTerminalWidget {
 
     public static final Color COMPUTER_CONSOLE_TEXT_COLOR = new Color(0xffffffff);
-
-    private static final int PADDING_HOR = 5;
-    private static final int PADDING_VER = 5;
-
     private static final int BLINK_LENGTH = 20;
-
-    @LayoutConfig
-    private String monospaceFont;
-
-    @LayoutConfig
-    private int characterWidth;
-
-    @LayoutConfig
-    private int fontHeight;
-
-    private Font monospacedFont;
 
     private char[][] chars = new char[CONSOLE_HEIGHT][CONSOLE_WIDTH];
     private int blinkDrawTick;
@@ -69,23 +39,7 @@ public class ComputerTerminalWidget extends CoreWidget {
 
     @Override
     public void onDraw(Canvas canvas) {
-        if (monospacedFont == null) {
-            monospacedFont = Assets.getFont(monospaceFont).get();
-        }
-
-        Rect2i region = canvas.getRegion();
-
-        int screenWidth = region.width();
-        int screenHeight = region.height();
-
-        // Fill background with solid dark-grey
-        canvas.drawFilledRectangle(Rect2i.createFromMinAndSize(0, 0, screenWidth, screenHeight), BACKGROUND_COLOR);
-
-        // Draw white rectangle around the screen
-        canvas.drawLine(0, 0, 0, screenHeight, FRAME_COLOR);
-        canvas.drawLine(screenWidth, 0, screenWidth, screenHeight, FRAME_COLOR);
-        canvas.drawLine(0, 0, screenWidth, 0, FRAME_COLOR);
-        canvas.drawLine(0, screenHeight, screenWidth, screenHeight, FRAME_COLOR);
+        super.onDraw(canvas);
 
         for (int y = 0; y < CONSOLE_HEIGHT; y++) {
             StringBuilder result = new StringBuilder();
@@ -97,7 +51,7 @@ public class ComputerTerminalWidget extends CoreWidget {
                 }
             }
             String text = result.toString();
-            canvas.drawTextRaw(text, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + (y - 1) * fontHeight, characterWidth * text.length(), fontHeight), HorizontalAlign.CENTER, VerticalAlign.TOP);
+            canvas.drawTextRaw(text, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + (y - 1) * CHARACTER_HEIGHT, CHARACTER_WIDTH * text.length(), CHARACTER_HEIGHT), HorizontalAlign.CENTER, VerticalAlign.TOP);
         }
 
         int currentCommandDisplayStartIndex = 0;
@@ -118,20 +72,13 @@ public class ComputerTerminalWidget extends CoreWidget {
         String commandLine = wholeCommandLine.substring(currentCommandDisplayStartIndex, Math.min(currentCommandDisplayStartIndex + CONSOLE_WIDTH, wholeCommandLine.length()));
         int cursorPositionInDisplayedCommandLine = 1 + cursorPositionInPlayerCommand - currentCommandDisplayStartIndex;
 
-        final int lastLineY = PADDING_VER + fontHeight * (CONSOLE_HEIGHT - 1);
-        canvas.drawTextRaw(commandLine, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + lastLineY, characterWidth * commandLine.length(), fontHeight), HorizontalAlign.CENTER, VerticalAlign.TOP);
+        final int lastLineY = PADDING_VER + CHARACTER_HEIGHT * (CONSOLE_HEIGHT - 1);
+        canvas.drawTextRaw(commandLine, monospacedFont, COMPUTER_CONSOLE_TEXT_COLOR, Rect2i.createFromMinAndSize(PADDING_HOR, PADDING_VER + lastLineY, CHARACTER_WIDTH * commandLine.length(), CHARACTER_HEIGHT), HorizontalAlign.CENTER, VerticalAlign.TOP);
 
         blinkDrawTick = ((++blinkDrawTick) % BLINK_LENGTH);
         if (blinkDrawTick * 2 > BLINK_LENGTH)
-            canvas.drawLine(PADDING_HOR + cursorPositionInDisplayedCommandLine * characterWidth, PADDING_VER + lastLineY, PADDING_HOR + cursorPositionInDisplayedCommandLine * characterWidth, PADDING_VER + lastLineY + fontHeight, COMPUTER_CONSOLE_TEXT_COLOR);
+            canvas.drawLine(PADDING_HOR + cursorPositionInDisplayedCommandLine * CHARACTER_WIDTH, PADDING_VER + lastLineY, PADDING_HOR + cursorPositionInDisplayedCommandLine * CHARACTER_WIDTH, PADDING_VER + lastLineY + CHARACTER_HEIGHT, COMPUTER_CONSOLE_TEXT_COLOR);
 
-    }
-
-    @Override
-    public Vector2i getPreferredContentSize(Canvas canvas, Vector2i sizeHint) {
-        int width = PADDING_HOR * 2 + characterWidth * CONSOLE_WIDTH;
-        int height = PADDING_VER * 2 + fontHeight * CONSOLE_HEIGHT;
-        return new Vector2i(width, height);
     }
 
 
@@ -175,8 +122,6 @@ public class ComputerTerminalWidget extends CoreWidget {
     public void setCursorIndex(int index) {
         this.cursorPositionInPlayerCommand = index;
     }
-
-
 
 }
 
